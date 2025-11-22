@@ -3,7 +3,7 @@ schema_version = "1.0.0"
 # Example of manifest file for a Blender extension
 # Change the values according to your extension
 id = "kittenExport"
-version = "0.0.1"
+version = "0.0.2"
 name = "Kitten Space Agency Exporter"
 tagline = "Export your models to Kitten Space Agency format"
 maintainer = "Marcus Zuber"
