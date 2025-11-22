@@ -679,14 +679,11 @@ class OBJECT_OT_export_ksa_metadata(bpy.types.Operator):
 
         # Add thruster subparts
         for thruster_data in thrusters:
-            sub_part = ET.SubElement(part_elem, 'SubPart', Id=thruster_data['name'])
-            # Reuse existing element creator (will attach Thruster element directly)
-            _thruster_dict_to_xml_element(sub_part, thruster_data)
-
-        # Add engine subparts
+            # Previously each thruster was wrapped in a SubPart; now we place it directly under Part.
+            _thruster_dict_to_xml_element(part_elem, thruster_data)
+        # Add engines directly under Part (no SubPart wrapper)
         for engine_data in engines:
-            sub_part = ET.SubElement(part_elem, 'SubPart', Id=engine_data['name'])
-            _engine_dict_to_xml_element(sub_part, engine_data)
+            _engine_dict_to_xml_element(part_elem, engine_data)
 
         # Serialize XML (pretty + CRLF)
         _indent_xml(root)
