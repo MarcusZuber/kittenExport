@@ -1,0 +1,43 @@
+﻿name: Build Extension
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build Extension Package
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Blender from Ubuntu repository
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+
+      - name: Build extension package
+        run: blender --command extension build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kittenExport-build-${{ github.run_number }}
+          path: |
+            *.zip
+            build/
+          retention-days: 30
+

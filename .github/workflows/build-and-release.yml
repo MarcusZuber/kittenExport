@@ -1,0 +1,67 @@
+﻿name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build Extension Package
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Blender from Ubuntu repository
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+
+      - name: Build extension package
+        run: blender --command extension build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kittenExport-build
+          path: |
+            *.zip
+            build/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    name: Create Release
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: kittenExport-build
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            *.zip
+          body: |
+            Release build for KittenExport extension.
+            
+            Version: ${{ github.ref_name }}
+            
+            This release includes the compiled extension package ready for installation in Blender.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
