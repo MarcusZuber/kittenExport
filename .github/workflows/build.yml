@@ -3,11 +3,11 @@
 on:
   push:
     branches:
-      - main
+      - master
       - develop
   pull_request:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 jobs:
@@ -24,10 +24,9 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Blender from Ubuntu repository
+      - name: Install Blender and dependencies from Ubuntu repository
         run: |
-          sudo apt-get update
-          sudo apt-get install -y blender
+          sudo snap install blender --classic
 
       - name: Build extension package
         run: blender --command extension build
