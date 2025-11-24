@@ -521,16 +521,10 @@ class OBJECT_OT_export_ksa_metadata(bpy.types.Operator):
             }
             engines.append(entry)
 
-        # Determine base directory
+        # Determine base directory, throws an exception if invalid
         import os
-        base_dir = self.filepath if os.path.isdir(self.filepath) else (os.path.dirname(self.filepath) if self.filepath else os.getcwd())
-        if not base_dir:
-            base_dir = os.getcwd()
-        # Ensure directory exists
-        try:
-            os.makedirs(base_dir, exist_ok=True)
-        except Exception:
-            pass
+        base_dir = self.filepath if os.path.isdir(self.filepath) else (os.path.dirname(self.filepath))
+
         meshes_dir = os.path.join(base_dir, 'Meshes')
         textures_dir = os.path.join(base_dir, 'Textures')
         try:
