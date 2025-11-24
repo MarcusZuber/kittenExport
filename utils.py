@@ -240,3 +240,16 @@ def _indent_xml(elem, level=0):
     else:
         if not elem.text or not elem.text.strip():
             elem.text = ''
+
+
+def prop_with_unit(layout, props, prop_name, unit, factor_edit=0.92): # layout for units after the numbers
+
+    prop_rna = props.bl_rna.properties[prop_name]
+    label = prop_rna.name
+    
+    split = layout.split(factor=factor_edit, align=True)
+    col_left = split.column(align=True)
+    col_right = split.column(align=True)
+
+    col_left.prop(props, prop_name, text=label)
+    col_right.label(text=unit)

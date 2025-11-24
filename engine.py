@@ -19,7 +19,7 @@
 import bpy
 import xml.etree.ElementTree as ET
 import math
-from .utils import _round_coordinate, _indent_xml
+from .utils import _round_coordinate, _indent_xml, prop_with_unit
 
 
 def _engine_dict_to_xml_element(parent, engine_data, decimal_places=3):
@@ -91,42 +91,42 @@ def engines_list_to_xml_str(list_of_meta):
 class EngineProperties(bpy.types.PropertyGroup):
     """Holds editable parameters for an 'Engine' object that will be used by the exporter."""
     thrust_kn: bpy.props.FloatProperty(
-        name="Thrust kN",
-        description="Engine thrust in kilonewtons",
-        default=650.0,
+        name="Thrust",
+        description="The force provided by the thruster firing in Kilonewtons.",
+        default=850.0,
         min=0.00,
     )
 
     specific_impulse_seconds: bpy.props.FloatProperty(
-        name="Specific Impulse Seconds",
-        description="Specific impulse in seconds",
-        default=10000.0,
+        name="Specific Impulse",
+        description="Specific impulse (Isp): \n Engine thrust divided by propellant weight (not mass) flowrate. \n Unit: [lbf]/([lbm]/[s]) = [s]·g0 = [s]",
+        default=350.0,
         min=0.00,
     )
 
     minimum_throttle: bpy.props.FloatProperty(
         name="Minimum Throttle",
         description="Minimum throttle value (0-1)",
-        default=0.05,
+        default=0.10,
         min=0.00,
         max=1.00,
     )
 
     volumetric_exhaust_id: bpy.props.StringProperty(
-        name="VolumetricExhaust_id",
-        description="",
+        name="Volumetric exhaust",
+        description="Volumetric exhaust effect to be used by the thurster when firing.",
         default="ApolloCSM"
     )
 
     sound_event_action_on: bpy.props.StringProperty(
-        name="SoundEventAction_On",
-        description="",
+        name="Sound",
+        description="Sound effect to be used by the thurster when firing.",
         default="DefaultEngineSoundBehavior"
     )
 
     exportable: bpy.props.BoolProperty(
         name="Export",
-        description="Include this object in custom exports",
+        description="Include this object in custom exports.",
         default=True,
     )
 
@@ -152,9 +152,11 @@ class OBJECT_OT_add_engine(bpy.types.Operator):
         # This visually represents the engine exhaust direction
         try:
             obj.empty_display_type = 'CONE'
-            obj.empty_display_size = 0.5
+            obj.empty_display_size = 4                  # makes scale more appropriate
+
             # Rotate the cone to point along +X (engine exhaust direction)
-            obj.rotation_euler = (0, -math.pi / 2, 0)
+            obj.rotation_euler = (0, 0, math.pi / 2)    # align engine thrust with -X direction
+            obj.scale = (0.5, 2, 0.5)                   # better proportions
         except Exception:
             pass
 
@@ -184,14 +186,14 @@ class OBJECT_PT_engine_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_engine_panel"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = 'object'
+    bl_context = 'data' # more intuitive location
 
     @classmethod
     def poll(cls, context):
         obj = getattr(context, 'object', None)
         if obj is None:
             return False
-        # Only show the panel for objects that are marked as engines
+        # Only show panel for objects that are marked as engines
         return obj.get('_is_engine') is not None or obj.get('_engine_meta') is not None or obj.name.startswith('Engine')
 
     def draw(self, context):
@@ -202,9 +204,9 @@ class OBJECT_PT_engine_panel(bpy.types.Panel):
         props = obj.engine_props
 
         col = layout.column()
-        col.prop(props, "thrust_kn")
-        col.prop(props, "specific_impulse_seconds")
-        col.prop(props, "minimum_throttle")
+        prop_with_unit(col, props, "thrust_kn", "kN")
+        prop_with_unit(col, props, "specific_impulse_seconds", "s")
+        prop_with_unit(col, props, "minimum_throttle", "%")
         col.prop(props, "volumetric_exhaust_id")
         col.prop(props, "sound_event_action_on")
         col.prop(props, "exportable")
