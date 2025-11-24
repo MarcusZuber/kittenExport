@@ -3,7 +3,7 @@ schema_version = "1.0.0"
 # Example of manifest file for a Blender extension
 # Change the values according to your extension
 id = "kittenExport"
-version = "0.0.2"
+version = "0.0.3"
 name = "Kitten Space Agency Exporter"
 tagline = "Export your models to Kitten Space Agency format"
 maintainer = "Marcus Zuber"
@@ -25,12 +25,11 @@ blender_version_min = "4.2.0"
 # License conforming to https://spdx.org/licenses/ (use "SPDX: prefix)
 # https://docs.blender.org/manual/en/dev/advanced/extensions/licenses.html
 license = [
-  "SPDX:GPL-3.0-or-later",
+    "SPDX:GPL-3.0-or-later",
 ]
 # # Optional: required by some licenses.
 copyright = [
-   "2025 Marcus Zuber",
-
+    "2025 Marcus Zuber",
 ]
 
 # # Optional: list of supported platforms. If omitted, the extension will be available in all operating systems.
@@ -69,8 +68,9 @@ copyright = [
 # # These are the default build excluded patterns.
 # # You only need to edit them if you want different options.
 paths_exclude_pattern = [
-   "__pycache__/",
-   "/.git/",
-   "/*.zip",
+    "__pycache__/",
+    "/.git/",
+    "/.github/",
+    "/*.zip",
     ".idea/"
- ]
+]
