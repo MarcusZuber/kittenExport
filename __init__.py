@@ -21,7 +21,20 @@ import json
 import xml.etree.ElementTree as ET
 
 
-def _thruster_dict_to_xml_element(parent, thruster_data):
+def _round_coordinate(value, decimal_places):
+    """Round a coordinate value based on the number of decimal places.
+
+    Args:
+        value: The coordinate value to round
+        decimal_places: Number of decimal places (e.g., 3 for 0.001 precision)
+
+    Returns:
+        Rounded value as float
+    """
+    return round(float(value), decimal_places)
+
+
+def _thruster_dict_to_xml_element(parent, thruster_data, decimal_places=3):
     """Convert a single thruster dict to KSA-format XML element."""
     # Use object name as ID
     thruster = ET.SubElement(parent, 'Thruster', Id=thruster_data.get('name', 'Unnamed'))
@@ -37,7 +50,8 @@ def _thruster_dict_to_xml_element(parent, thruster_data):
         final_loc = loc
 
     if final_loc:
-        ET.SubElement(thruster, 'Location', X=str(final_loc[0]), Y=str(final_loc[1]), Z=str(final_loc[2]))
+        rounded_loc = [_round_coordinate(v, decimal_places) for v in final_loc]
+        ET.SubElement(thruster, 'Location', X=str(rounded_loc[0]), Y=str(rounded_loc[1]), Z=str(rounded_loc[2]))
 
     # ExhaustDirection from object's absolute rotation (forward = +X axis after rotation)
     # The object's local +X axis in world space represents the exhaust direction
@@ -62,7 +76,8 @@ def _thruster_dict_to_xml_element(parent, thruster_data):
     else:
         ex_dir = [1.0, 0.0, 0.0]  # default forward (+X)
 
-    ET.SubElement(thruster, 'ExhaustDirection', X=str(ex_dir[0]), Y=str(ex_dir[1]), Z=str(ex_dir[2]))
+    rounded_ex_dir = [_round_coordinate(v, decimal_places) for v in ex_dir]
+    ET.SubElement(thruster, 'ExhaustDirection', X=str(rounded_ex_dir[0]), Y=str(rounded_ex_dir[1]), Z=str(rounded_ex_dir[2]))
 
     # ControlMap CSV
     csv_parts = []
@@ -105,7 +120,7 @@ def _thruster_dict_to_xml_element(parent, thruster_data):
     ET.SubElement(thruster, 'SoundEvent', Action='On', SoundId=sound_id)
 
 
-def _engine_dict_to_xml_element(parent, engine_data):
+def _engine_dict_to_xml_element(parent, engine_data, decimal_places=3):
     """Convert a single engine dict to KSA-format XML element."""
     # Use object name as ID
     engine = ET.SubElement(parent, 'Engine', Id=engine_data.get('name', 'Unnamed'))
@@ -113,7 +128,8 @@ def _engine_dict_to_xml_element(parent, engine_data):
     # Location from absolute world position
     loc = engine_data.get('location', [0.0, 0.0, 0.0])
     if loc:
-        ET.SubElement(engine, 'Location', X=str(loc[0]), Y=str(loc[1]), Z=str(loc[2]))
+        rounded_loc = [_round_coordinate(v, decimal_places) for v in loc]
+        ET.SubElement(engine, 'Location', X=str(rounded_loc[0]), Y=str(rounded_loc[1]), Z=str(rounded_loc[2]))
 
     # ExhaustDirection from object's absolute rotation (forward = +X axis after rotation)
     import math
@@ -135,7 +151,8 @@ def _engine_dict_to_xml_element(parent, engine_data):
     else:
         ex_dir = [1.0, 0.0, 0.0]  # default forward (+X)
 
-    ET.SubElement(engine, 'ExhaustDirection', X=str(ex_dir[0]), Y=str(ex_dir[1]), Z=str(ex_dir[2]))
+    rounded_ex_dir = [_round_coordinate(v, decimal_places) for v in ex_dir]
+    ET.SubElement(engine, 'ExhaustDirection', X=str(rounded_ex_dir[0]), Y=str(rounded_ex_dir[1]), Z=str(rounded_ex_dir[2]))
 
     # Thrust with N attribute (convert kN to N by multiplying with 1000)
     thrust_kn = engine_data.get('thrust_kn', 650.0)
@@ -430,6 +447,14 @@ class OBJECT_OT_export_ksa_metadata(bpy.types.Operator):
         default="MyRocket",
     )
 
+    coordinate_decimal_places: bpy.props.IntProperty(
+        name="Coordinate Decimal Places",
+        description="Number of decimal places for coordinates in the XML export (e.g., 3 for 0.001 precision)",
+        default=3,
+        min=0,
+        max=10,
+    )
+
     def invoke(self, context, event):
         try:
             # Suggest current working directory; user picks folder
@@ -443,6 +468,7 @@ class OBJECT_OT_export_ksa_metadata(bpy.types.Operator):
         """Draw custom properties in the file selector dialog."""
         layout = self.layout
         layout.prop(self, "part_id")
+        layout.prop(self, "coordinate_decimal_places")
 
     def execute(self, context):
         scene = getattr(context, 'scene', None)
@@ -680,10 +706,10 @@ class OBJECT_OT_export_ksa_metadata(bpy.types.Operator):
         # Add thruster subparts
         for thruster_data in thrusters:
             # Previously each thruster was wrapped in a SubPart; now we place it directly under Part.
-            _thruster_dict_to_xml_element(part_elem, thruster_data)
+            _thruster_dict_to_xml_element(part_elem, thruster_data, self.coordinate_decimal_places)
         # Add engines directly under Part (no SubPart wrapper)
         for engine_data in engines:
-            _engine_dict_to_xml_element(part_elem, engine_data)
+            _engine_dict_to_xml_element(part_elem, engine_data, self.coordinate_decimal_places)
 
         # Serialize XML (pretty + CRLF)
         _indent_xml(root)
