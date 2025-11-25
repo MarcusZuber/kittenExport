@@ -105,7 +105,7 @@ def _thruster_dict_to_xml_element(parent, thruster_data, decimal_places=3):
     ET.SubElement(thruster, 'VolumetricExhaust', Id=exhaust_id)
 
     # SoundEvent with Action and SoundId attributes
-    sound_id = thruster_data.get('sound_event_on', 'DefaultRcsThruster')
+    sound_id = thruster_data.get('sound_effect', 'DefaultRcsThruster')
     ET.SubElement(thruster, 'SoundEvent', Action='On', SoundId=sound_id)
 
 
@@ -143,15 +143,21 @@ class ThrusterProperties(bpy.types.PropertyGroup):
     )
 
     volumetric_exhaust_id: bpy.props.StringProperty(
-        name="VolumetricExhaust_id",
+        name="Exhaust effect",
         description="Volumetric exhaust effect to be used by the thurster when firing.",
         default="ApolloRCS"
     )
 
-    sound_event_on: bpy.props.StringProperty(
+    sound_effect: bpy.props.StringProperty(
         name="Sound effect",
-        description="Sound effect to be used by the thurster when firing.",
+        description="Sound effect to be played when firing the thurster.",
         default="DefaultRcsThruster"
+    )
+
+    sound_on: bpy.props.BoolProperty(
+        name="Sound on",
+        description="Sound effect on/off.",
+        default=True,
     )
 
     control_map_translation: bpy.props.BoolVectorProperty(
@@ -169,7 +175,7 @@ class ThrusterProperties(bpy.types.PropertyGroup):
     )
 
     fx_location: bpy.props.FloatVectorProperty(
-        name="FxLocation",
+        name="Offset",
         description="Offset of the thruster effect.",
         default=(0.0, 0.0, 0.0),
         size=3,                          # 3D vector
@@ -264,11 +270,15 @@ class OBJECT_PT_thruster_panel(bpy.types.Panel):
         prop_with_unit(col, props, "thrust_n", "N")
         prop_with_unit(col, props, "specific_impulse_seconds", "s")
         prop_with_unit(col, props, "minimum_pulse_time_seconds", "s")
-
         col.separator()
 
+        # Exhaust effect
         col.prop(props, "volumetric_exhaust_id")
-        col.prop(props, "sound_event_on")
+        col.separator()
+
+        # Sound effect
+        col.prop(props, "sound_effect")
+        col.prop(props, "sound_on")
 
 
 class OBJECT_PT_thruster_panel_control(bpy.types.Panel):
@@ -344,6 +354,34 @@ class OBJECT_PT_thruster_panel_offset(bpy.types.Panel):
         col = layout.column()
 
         col.prop(props, "fx_location")
+        col.separator()
+
+
+class OBJECT_PT_thruster_panel_export(bpy.types.Panel):
+    bl_label = "Thruster export"
+    bl_idname = "OBJECT_PT_thruster_panel_offset"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'data'  
+
+    @classmethod
+    def poll(cls, context):
+        obj = getattr(context, 'object', None)
+        if obj is None:
+            return False
+        # Only show panel for objects that are marked as thrusters
+        return obj.get('_is_thruster') is not None or obj.get('_thruster_meta') is not None or obj.name.startswith(
+            'Thruster')
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+
+        # Access thruster_props
+        props = obj.thruster_props
+        
+        col = layout.column()
 
         col.separator()
         col.prop(props, "exportable")
+        col.separator()

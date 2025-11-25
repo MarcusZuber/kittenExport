@@ -21,6 +21,7 @@ import bpy
 # Import modules with all classes and functions
 from . import utils
 from .thruster import (
+    OBJECT_PT_thruster_panel_export,
     ThrusterProperties,
     OBJECT_OT_add_thruster,
     OBJECT_PT_thruster_panel,
@@ -31,6 +32,7 @@ from .engine import (
     EngineProperties,
     OBJECT_OT_add_engine,
     OBJECT_PT_engine_panel,
+    OBJECT_PT_engine_panel_export,
 )
 from .export import (
     OBJECT_OT_export_ksa_metadata,
@@ -47,7 +49,7 @@ bl_info = {
     "name": "Kitten export",
     "description": "A Blender addon for exporting spacecraft models to Kitten Space Agency (KSA) format with support for thrusters, engines, meshes, and materials.",
     "author": "Marcus Zuber",
-    "version": (0, 0, 5),
+    "version": (0, 0, 6),
     "blender": (4, 50, 0),
     "location": "Add Menu > KSA folder, and File > Export > KSA Part",
     "category": ["Add Mesh", "Import-Export"],
@@ -62,7 +64,9 @@ classes = (
     OBJECT_PT_thruster_panel,
     OBJECT_PT_thruster_panel_control,
     OBJECT_PT_thruster_panel_offset,
+    OBJECT_PT_thruster_panel_export,
     OBJECT_PT_engine_panel,
+    OBJECT_PT_engine_panel_export,
     OBJECT_OT_export_ksa_metadata,
     OBJECT_OT_export_glb_with_meta,
     VIEW3D_MT_ksa_add,
