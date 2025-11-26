@@ -52,6 +52,12 @@ def _engine_dict_to_xml_element(parent, engine_data, decimal_places=3):
     else:
         ex_dir = [1.0, 0.0, 0.0]  # default forward (+X)
 
+    
+    if engine_data.get('sound_on'): # switchable sound export on/off
+        engine_sound_on_off = 'On'
+    else:
+        engine_sound_on_off = 'Off'
+
     rounded_ex_dir = [_round_coordinate(v, decimal_places) for v in ex_dir]
     ET.SubElement(engine, 'ExhaustDirection', X=str(rounded_ex_dir[0]), Y=str(rounded_ex_dir[1]),
                   Z=str(rounded_ex_dir[2]))
@@ -75,7 +81,7 @@ def _engine_dict_to_xml_element(parent, engine_data, decimal_places=3):
 
     # SoundEvent with Action and SoundId attributes
     sound_id = engine_data.get('sound_effect', 'DefaultEngineSoundBehavior')
-    ET.SubElement(engine, 'SoundEvent', Action='On', SoundId=sound_id)
+    ET.SubElement(engine, 'SoundEvent', Action=engine_sound_on_off, SoundId=sound_id)
 
 
 def engines_list_to_xml_str(list_of_meta):
@@ -220,7 +226,6 @@ class OBJECT_PT_engine_panel(bpy.types.Panel):
         # Exhaust effect
         col.prop(props, "volumetric_exhaust_id")
         col.separator()
-        # col.prop(props, "sound_event_action_on")
 
         # Sound effect
         col.prop(props, "sound_effect")

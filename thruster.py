@@ -84,6 +84,11 @@ def _thruster_dict_to_xml_element(parent, thruster_data, decimal_places=3):
             if enabled and i < len(rot_labels):
                 csv_parts.append(rot_labels[i])
 
+    if thruster_data.get('sound_on'): # switchable sound export on/off
+        thruster_sound_on_off = 'On'
+    else:
+        thruster_sound_on_off = 'Off'
+
     # Always add the ControlMap element (even if empty)
     csv_value = ','.join(csv_parts) if csv_parts else ''
     ET.SubElement(thruster, 'ControlMap', CSV=csv_value)
@@ -106,7 +111,7 @@ def _thruster_dict_to_xml_element(parent, thruster_data, decimal_places=3):
 
     # SoundEvent with Action and SoundId attributes
     sound_id = thruster_data.get('sound_effect', 'DefaultRcsThruster')
-    ET.SubElement(thruster, 'SoundEvent', Action='On', SoundId=sound_id)
+    ET.SubElement(thruster, 'SoundEvent', Action=thruster_sound_on_off, SoundId=sound_id)
 
 
 def thrusters_list_to_xml_str(list_of_meta):
