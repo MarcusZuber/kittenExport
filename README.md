@@ -54,7 +54,7 @@ A Blender addon for exporting spacecraft models to Kitten Space Agency (KSA) for
 1. In the 3D viewport, press **Shift+A** to open the Add menu
 2. Navigate to **KSA** → **Thruster**
 3. An Empty object with arrow visualization will be created
-4. In the Properties panel, configure thruster parameters:
+4. In the Data panel, configure thruster parameters:
    - **FxLocation**: Particle effect origin offset
    - **Thrust N**: Thrust in Newtons (default: 40)
    - **Specific Impulse Seconds**: ISP in seconds
@@ -69,7 +69,7 @@ A Blender addon for exporting spacecraft models to Kitten Space Agency (KSA) for
 1. In the 3D viewport, press **Shift+A** to open the Add menu
 2. Navigate to **KSA** → **Engine**
 3. An Empty object with cone visualization will be created
-4. In the Properties panel, configure engine parameters:
+4. In the Data panel, configure engine parameters:
    - **Thrust kN**: Thrust in kilonewtons (default: 650)
    - **Specific Impulse Seconds**: ISP in seconds
    - **Minimum Throttle**: Minimum throttle fraction (0-1)
@@ -165,7 +165,7 @@ This project is licensed under the GNU General Public License v3.0 or later - se
 
 ## Author
 
-**Marcus Zuber**
+**Marcus Zuber** and all [contributors](https://github.com/MarcusZuber/kittenExport/graphs/contributors).
 
 ## Support
 
