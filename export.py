@@ -54,7 +54,7 @@ class OBJECT_OT_export_ksa_metadata(bpy.types.Operator):
 
     coordinate_decimal_places: bpy.props.IntProperty(
         name="Coordinate Decimal Places",
-        description="Number of decimal places for coordinates in the XML export (e.g., 3 for 0.001 precision)",
+        description="Number of decimal places for coordinates in the XML export (e.g., 3 for 0.001 precision). \n Bigger does not equal better. Recommended to not increase above 4. This is a soltuion for floating point errors for now.",
         default=3,
         min=0,
         max=10,
@@ -98,7 +98,7 @@ class OBJECT_OT_export_ksa_metadata(bpy.types.Operator):
                 'specific_impulse_seconds': tp.specific_impulse_seconds,
                 'minimum_pulse_time_seconds': tp.minimum_pulse_time_seconds,
                 'volumetric_exhaust_id': tp.volumetric_exhaust_id,
-                'sound_event_on': tp.sound_event_on,
+                'sound_effect': tp.sound_effect,
                 'control_map_translation': _safe_vector_to_list(tp.control_map_translation),
                 'control_map_rotation': _safe_vector_to_list(tp.control_map_rotation),
                 'exportable': tp.exportable,
@@ -121,7 +121,7 @@ class OBJECT_OT_export_ksa_metadata(bpy.types.Operator):
                 'specific_impulse_seconds': ep.specific_impulse_seconds,
                 'minimum_throttle': ep.minimum_throttle,
                 'volumetric_exhaust_id': ep.volumetric_exhaust_id,
-                'sound_event_action_on': ep.sound_event_action_on,
+                'sound_effect': ep.sound_effect,
                 'exportable': ep.exportable,
             }
             engines.append(entry)
@@ -406,7 +406,7 @@ class OBJECT_OT_export_glb_with_meta(bpy.types.Operator):
                         'specific_impulse_seconds': kp.specific_impulse_seconds,
                         'minimum_pulse_time_seconds': kp.minimum_pulse_time_seconds,
                         'volumetric_exhaust_id': kp.volumetric_exhaust_id,
-                        'sound_event_on': kp.sound_event_on,
+                        'sound_effect': kp.sound_effect,
                         'control_map_translation': _safe_vector_to_list(kp.control_map_translation),
                         'control_map_rotation': _safe_vector_to_list(kp.control_map_rotation),
                         'exportable': kp.exportable,

@@ -52,6 +52,12 @@ def _engine_dict_to_xml_element(parent, engine_data, decimal_places=3):
     else:
         ex_dir = [1.0, 0.0, 0.0]  # default forward (+X)
 
+    
+    if engine_data.get('sound_on'): # switchable sound export on/off
+        engine_sound_on_off = 'On'
+    else:
+        engine_sound_on_off = 'Off'
+
     rounded_ex_dir = [_round_coordinate(v, decimal_places) for v in ex_dir]
     ET.SubElement(engine, 'ExhaustDirection', X=str(rounded_ex_dir[0]), Y=str(rounded_ex_dir[1]),
                   Z=str(rounded_ex_dir[2]))
@@ -74,8 +80,8 @@ def _engine_dict_to_xml_element(parent, engine_data, decimal_places=3):
     ET.SubElement(engine, 'VolumetricExhaust', Id=exhaust_id)
 
     # SoundEvent with Action and SoundId attributes
-    sound_id = engine_data.get('sound_event_action_on', 'DefaultEngineSoundBehavior')
-    ET.SubElement(engine, 'SoundEvent', Action='On', SoundId=sound_id)
+    sound_id = engine_data.get('sound_effect', 'DefaultEngineSoundBehavior')
+    ET.SubElement(engine, 'SoundEvent', Action=engine_sound_on_off, SoundId=sound_id)
 
 
 def engines_list_to_xml_str(list_of_meta):
@@ -113,16 +119,23 @@ class EngineProperties(bpy.types.PropertyGroup):
     )
 
     volumetric_exhaust_id: bpy.props.StringProperty(
-        name="Volumetric exhaust",
+        name="Exhaust effect",
         description="Volumetric exhaust effect to be used by the thurster when firing.",
         default="ApolloCSM"
     )
 
-    sound_event_action_on: bpy.props.StringProperty(
-        name="Sound",
+    sound_effect: bpy.props.StringProperty(
+        name="Sound effect",
         description="Sound effect to be used by the thurster when firing.",
         default="DefaultEngineSoundBehavior"
     )
+
+    sound_on: bpy.props.BoolProperty(
+        name="Sound on",
+        description="Sound effect on/off.",
+        default=True,
+    )
+
 
     exportable: bpy.props.BoolProperty(
         name="Export",
@@ -207,6 +220,44 @@ class OBJECT_PT_engine_panel(bpy.types.Panel):
         prop_with_unit(col, props, "thrust_kn", "kN")
         prop_with_unit(col, props, "specific_impulse_seconds", "s")
         prop_with_unit(col, props, "minimum_throttle", "%")
+
+        col.separator()
+
+        # Exhaust effect
         col.prop(props, "volumetric_exhaust_id")
-        col.prop(props, "sound_event_action_on")
+        col.separator()
+
+        # Sound effect
+        col.prop(props, "sound_effect")
+        col.prop(props, "sound_on") # Sound on/ff
+        col.separator()
+
+
+class OBJECT_PT_engine_panel_export(bpy.types.Panel):
+    """Display engine properties in the properties panel."""
+    bl_label = "Engine export"
+    bl_idname = "OBJECT_PT_engine_panel_export"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'data' # more intuitive location
+
+    @classmethod
+    def poll(cls, context):
+        obj = getattr(context, 'object', None)
+        if obj is None:
+            return False
+        # Only show panel for objects that are marked as engines
+        return obj.get('_is_engine') is not None or obj.get('_engine_meta') is not None or obj.name.startswith('Engine')
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+
+        # Access engine_props
+        props = obj.engine_props
+
+        col = layout.column()
+
+        col.separator()
         col.prop(props, "exportable")
+        col.separator()
