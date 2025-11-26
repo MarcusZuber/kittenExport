@@ -42,16 +42,6 @@ from .menu import (
     menu_func_export,
 )
 
-# Addon metadata
-bl_info = {
-    "name": "Kitten export",
-    "description": "A Blender addon for exporting spacecraft models to Kitten Space Agency (KSA) format with support for thrusters, engines, meshes, and materials.",
-    "author": "Marcus Zuber",
-    "version": (0, 0, 5),
-    "blender": (4, 50, 0),
-    "location": "Add Menu > KSA folder, and File > Export > KSA Part",
-    "category": ["Add Mesh", "Import-Export"],
-}
 
 # List of all classes to register
 classes = (
