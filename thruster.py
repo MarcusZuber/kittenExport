@@ -19,7 +19,7 @@
 import bpy
 import xml.etree.ElementTree as ET
 import math
-from .utils import _round_coordinate, _safe_vector_to_list, _indent_xml
+from .utils import _round_coordinate, _safe_vector_to_list, _indent_xml, prop_with_unit
 
 
 def _thruster_dict_to_xml_element(parent, thruster_data, decimal_places=3):
@@ -121,60 +121,65 @@ def thrusters_list_to_xml_str(list_of_meta):
 
 class ThrusterProperties(bpy.types.PropertyGroup):
     """Holds editable parameters for a 'Kitten' object that will be used by the exporter."""
-    fx_location: bpy.props.FloatVectorProperty(
-        name="FxLocation",
-        description="Origin of the thruster effect",
-        default=(0.0, 0.0, 0.0),
-    )
+    
     thrust_n: bpy.props.FloatProperty(
-        name="Thrust N",
-        description="?",
-        default=40,
+        name="Thrust",
+        description="The force provided by the thruster firing in Newtons.",
+        default=100,
         min=0.00,
     )
     specific_impulse_seconds: bpy.props.FloatProperty(
-        name="Specific impulse seconds",
-        description="?",
-        default=0.0,
+        name="Specific impulse",
+        description="Specific impulse (Isp): \n Engine thrust divided by propellant weight (not mass) flowrate. \n Unit: [lbf]/([lbm]/[s]) = [s]·g0 = [s] ",
+        default=280.0,
         min=0.00,
     )
 
     minimum_pulse_time_seconds: bpy.props.FloatProperty(
-        name="Minimum pulse time seconds",
-        description="?",
-        default=0.0,
+        name="Minimum pulse time",
+        description="Shortest thruster firing time in seconds",
+        default=0.5,
         min=0.00,
     )
 
     volumetric_exhaust_id: bpy.props.StringProperty(
         name="VolumetricExhaust_id",
-        description="",
+        description="Volumetric exhaust effect to be used by the thurster when firing.",
         default="ApolloRCS"
     )
 
     sound_event_on: bpy.props.StringProperty(
-        name="Sound event on",
-        description="",
+        name="Sound effect",
+        description="Sound effect to be used by the thurster when firing.",
         default="DefaultRcsThruster"
     )
 
     control_map_translation: bpy.props.BoolVectorProperty(
         name="control_map_translation",
-        description="Set if thruster should fire on translation input. [TranslateForward, TranslateBackward, TranslateLeft, TranslateRight, TranslateUp, TranslateDown]",
+        description="Set if thruster should fire on translation input. Do not select both option for the same direction.",
         default=[False, False, False, False, False, False],
         size=6
     )
 
     control_map_rotation: bpy.props.BoolVectorProperty(
         name="control_map_rotation",
-        description="Set if thruster should fire on rotation input. [PitchUp, PitchDown, RollLeft, RollRight, YawLeft, YawRight]",
+        description="Set if thruster should fire on rotation input. Do not select both option for the same direction.",
         default=[False, False, False, False, False, False],
         size=6
     )
 
+    fx_location: bpy.props.FloatVectorProperty(
+        name="FxLocation",
+        description="Offset of the thruster effect.",
+        default=(0.0, 0.0, 0.0),
+        size=3,                          # 3D vector
+        subtype='TRANSLATION',           # <-- This gives X/Y/Z, use subtype='XYZ' if you only want generic XYZ fields
+        unit='LENGTH'                    # <-- Uses scene length units (m, cm, etc.)
+    )
+
     exportable: bpy.props.BoolProperty(
         name="Export",
-        description="Include this object in custom exports",
+        description="Include this object in custom exports.",
         default=True,
     )
 
@@ -202,7 +207,7 @@ class OBJECT_OT_add_thruster(bpy.types.Operator):
         # This visually represents the thruster direction
         try:
             obj.empty_display_type = 'SINGLE_ARROW'
-            obj.empty_display_size = 0.3
+            obj.empty_display_size = 2
             # Rotate the arrow to point along +X (thruster exhaust direction)
             # Default arrow points along +Z, so rotate -90° around Y axis
             obj.rotation_euler = (0, -math.pi / 2, 0)
@@ -236,7 +241,7 @@ class OBJECT_PT_thruster_panel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_thruster_panel"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = 'object'
+    bl_context = 'data' # more intuitive location
 
     @classmethod
     def poll(cls, context):
@@ -256,28 +261,89 @@ class OBJECT_PT_thruster_panel(bpy.types.Panel):
 
         col = layout.column()
         # Basic properties
-        col.prop(props, "fx_location")
-        col.prop(props, "thrust_n")
-        col.prop(props, "specific_impulse_seconds")
-        col.prop(props, "minimum_pulse_time_seconds")
+        prop_with_unit(col, props, "thrust_n", "N")
+        prop_with_unit(col, props, "specific_impulse_seconds", "s")
+        prop_with_unit(col, props, "minimum_pulse_time_seconds", "s")
+
+        col.separator()
+
         col.prop(props, "volumetric_exhaust_id")
         col.prop(props, "sound_event_on")
 
-        # Translation control mapping with labels
-        col.separator()
-        box = col.box()
-        box.label(text="Translation Control Map:")
+
+class OBJECT_PT_thruster_panel_control(bpy.types.Panel):
+    bl_label = "Thruster control map"
+    bl_idname = "OBJECT_PT_thruster_panel_control"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'data'  
+
+    @classmethod
+    def poll(cls, context):
+        obj = getattr(context, 'object', None)
+        if obj is None:
+            return False
+        # Only show panel for objects that are marked as thrusters
+        return obj.get('_is_thruster') is not None or obj.get('_thruster_meta') is not None or obj.name.startswith(
+            'Thruster')
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+
+        # Access thruster_props
+        props = obj.thruster_props
+        
+        col = layout.column()
+
+        # ------------------------------------------
+        # SIDE-BY-SIDE BOXES
+        # ------------------------------------------
+        row = col.row(align=True)
+
+        # --- Left Box: Translation ---
+        col_left = row.column(align=True)
+        box = col_left.box()
+        box.label(text="Translation")
         translation_labels = ["Forward", "Backward", "Left", "Right", "Up", "Down"]
         for i, label in enumerate(translation_labels):
             box.prop(props, "control_map_translation", index=i, text=label)
 
-        # Rotation control mapping with labels
-        col.separator()
-        box = col.box()
-        box.label(text="Rotation Control Map:")
+        # --- Right Box: Rotation ---
+        col_right = row.column(align=True)
+        box = col_right.box()
+        box.label(text="Rotation")
         rotation_labels = ["Pitch Up", "Pitch Down", "Roll Left", "Roll Right", "Yaw Left", "Yaw Right"]
         for i, label in enumerate(rotation_labels):
             box.prop(props, "control_map_rotation", index=i, text=label)
+
+
+class OBJECT_PT_thruster_panel_offset(bpy.types.Panel):
+    bl_label = "Thruster effect offset"
+    bl_idname = "OBJECT_PT_thruster_panel_offset"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = 'data'  
+
+    @classmethod
+    def poll(cls, context):
+        obj = getattr(context, 'object', None)
+        if obj is None:
+            return False
+        # Only show panel for objects that are marked as thrusters
+        return obj.get('_is_thruster') is not None or obj.get('_thruster_meta') is not None or obj.name.startswith(
+            'Thruster')
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+
+        # Access thruster_props
+        props = obj.thruster_props
+        
+        col = layout.column()
+
+        col.prop(props, "fx_location")
 
         col.separator()
         col.prop(props, "exportable")
