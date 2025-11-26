@@ -165,7 +165,7 @@ This project is licensed under the GNU General Public License v3.0 or later - se
 
 ## Author
 
-**Marcus Zuber**
+**Marcus Zuber** and all [contributors](https://github.com/MarcusZuber/kittenExport/graphs/contributors).
 
 ## Support
 
